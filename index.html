@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JARVIS AI Assistant</title>
+  <style>
+    body {
+      background-color: #0b0c10;
+      color: #66fcf1;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      text-align: center;
+      border: 2px solid #45a29e;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 25px #45a29e;
+      width: 400px;
+    }
+    h1 {
+      font-size: 2em;
+      margin-bottom: 15px;
+    }
+    #output {
+      margin-top: 15px;
+      font-size: 1.1em;
+      min-height: 80px;
+      color: #c5c6c7;
+    }
+    input {
+      width: 80%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      background-color: #1f2833;
+      color: white;
+    }
+    button {
+      background-color: #45a29e;
+      color: #0b0c10;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 15px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #66fcf1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>JARVIS</h1>
+    <div id="output">Say "Hey Jarvis" or type below...</div>
+    <input type="text" id="input" placeholder="Ask me something...">
+    <br>
+    <button id="sendBtn">Send</button>
+    <button id="voiceBtn">🎤 Talk</button>
+  </div>
+
+  <script>
+    // 🔑 Add your OpenAI API key here
+    const API_KEY = "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"; // <-- replace with your API key
+
+    const output = document.getElementById('output');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+    const voiceBtn = document.getElementById('voiceBtn');
+
+    function speak(text) {
+      const speech = new SpeechSynthesisUtterance(text);
+      speech.lang = 'en-US';
+      window.speechSynthesis.speak(speech);
+    }
+
+    async function askJarvis(question) {
+      output.innerHTML = "Thinking...";
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: "You are Jarvis, a smart, polite AI assistant." },
+            { role: "user", content: question }
+          ]
+        })
+      });
+
+      const data = await response.json();
+      const answer = data.choices[0].message.content;
+      output.innerHTML = answer;
+      speak(answer);
+    }
+
+    sendBtn.addEventListener("click", () => {
+      const question = input.value.trim();
+      if (question) {
+        askJarvis(question);
+        input.value = "";
+      }
+    });
+
+    // Voice recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.onresult = event => {
+        const transcript = event.results[0][0].transcript;
+        output.innerHTML = "You said: " + transcript;
+        askJarvis(transcript);
+      };
+      voiceBtn.addEventListener("click", () => {
+        recognition.start();
+        speak("Yes, I am listening.");
+      });
+    } else {
+      voiceBtn.disabled = true;
+      voiceBtn.innerText = "🎤 Not supported";
+    }
+  </script>
+</body>
+</html>
